@@ -1,0 +1,155 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mybatis_demo.mapper.OrderMapper">
+
+    <resultMap id="OrderResultMap" type="Order">
+        <id property="id" column="id"/>
+        <result property="orderDate" column="order_date"/>
+        <result property="orderedBy" column="ordered_by"/>
+        <result property="status" column="status"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="OrderWithUserResultMap"
+               type="Order"
+               extends="OrderResultMap">
+        <association property="user"
+                     javaType="AppUser">
+            <id property="id" column="u_id"/>
+            <result property="firstName" column="u_first_name"/>
+            <result property="lastName" column="u_last_name"/>
+            <result property="username" column="u_username"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="OrderWithItemsResultMap"
+               type="Order"
+               extends="OrderWithUserResultMap">
+        <collection property="orderItems"
+                    ofType="OrderItem">
+            <id property="id" column="oi_id"/>
+            <result property="articleId" column="oi_article_id"/>
+            <result property="orderedQuantity" column="oi_ordered_quantity"/>
+            <result property="unitPrice" column="oi_unit_price"/>
+            <result property="totalPrice" column="oi_total_price"/>
+            <association property="article"
+                         javaType="Article">
+                <id property="id" column="a_id"/>
+                <result property="name" column="a_name"/>
+                <result property="description" column="a_description"/>
+                <result property="category" column="a_category"/>
+                <result property="price" column="a_price"/>
+            </association>
+        </collection>
+    </resultMap>
+
+    <select id="findAll" resultMap="OrderWithUserResultMap">
+        SELECT o.*,
+        u.id as u_id, u.first_name as u_first_name, u.last_name as u_last_name,
+        u.username as u_username
+        FROM "order" o
+        LEFT JOIN app_user u ON o.ordered_by = u.id
+        ORDER BY o.order_date DESC
+    </select>
+
+    <select id="findById" resultMap="OrderWithUserResultMap">
+        SELECT o.*,
+        u.id as u_id, u.first_name as u_first_name, u.last_name as u_last_name,
+        u.username as u_username
+        FROM "order" o
+        LEFT JOIN app_user u ON o.ordered_by = u.id
+        WHERE o.id = #{id}
+    </select>
+
+    <select id="findByIdWithItems" resultMap="OrderWithItemsResultMap">
+        SELECT o.*,
+        u.id as u_id, u.first_name as u_first_name, u.last_name as u_last_name,
+        u.username as u_username,
+        oi.id as oi_id, oi.article_id as oi_article_id, oi.ordered_quantity as
+        oi_ordered_quantity,
+        oi.unit_price as oi_unit_price, oi.total_price as oi_total_price,
+        a.id as a_id, a.name as a_name, a.description as a_description,
+        a.category as a_category, a.price as a_price
+        FROM "order" o
+        LEFT JOIN app_user u ON o.ordered_by = u.id
+        LEFT JOIN order_order_item ooi ON o.id = ooi.order_id
+        LEFT JOIN order_item oi ON ooi.order_item_id = oi.id
+        LEFT JOIN article a ON oi.article_id = a.id
+        WHERE o.id = #{id}
+    </select>
+
+    <select id="findByUserId" resultMap="OrderWithUserResultMap">
+        SELECT o.*,
+        u.id as u_id, u.first_name as u_first_name, u.last_name as u_last_name,
+        u.username as u_username
+        FROM "order" o
+        LEFT JOIN app_user u ON o.ordered_by = u.id
+        WHERE o.ordered_by = #{userId}
+        ORDER BY o.order_date DESC
+    </select>
+
+    <select id="findByUserIdWithItems" resultMap="OrderWithItemsResultMap">
+        SELECT o.*,
+        u.id as u_id, u.first_name as u_first_name, u.last_name as u_last_name,
+        u.username as u_username,
+        oi.id as oi_id, oi.article_id as oi_article_id, oi.ordered_quantity as
+        oi_ordered_quantity,
+        oi.unit_price as oi_unit_price, oi.total_price as oi_total_price,
+        a.id as a_id, a.name as a_name, a.description as a_description,
+        a.category as a_category, a.price as a_price
+        FROM "order" o
+        LEFT JOIN app_user u ON o.ordered_by = u.id
+        LEFT JOIN order_order_item ooi ON o.id = ooi.order_id
+        LEFT JOIN order_item oi ON ooi.order_item_id = oi.id
+        LEFT JOIN article a ON oi.article_id = a.id
+        WHERE o.ordered_by = #{userId}
+        ORDER BY o.order_date DESC
+    </select>
+
+    <select id="findByStatus" resultMap="OrderWithUserResultMap">
+        SELECT o.*,
+        u.id as u_id, u.first_name as u_first_name, u.last_name as u_last_name,
+        u.username as u_username
+        FROM "order" o
+        LEFT JOIN app_user u ON o.ordered_by = u.id
+        WHERE o.status = #{status}::order_status_enum
+        ORDER BY o.order_date DESC
+    </select>
+
+    <insert id="insert" parameterType="Order" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO "order" (ordered_by, status, total_amount)
+        VALUES (#{orderedBy}, #{status}::order_status_enum, #{totalAmount})
+    </insert>
+
+    <update id="update" parameterType="Order">
+        UPDATE "order"
+        SET status = #{status}::order_status_enum,
+        total_amount = #{totalAmount},
+        updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE "order"
+        SET status = #{status}::order_status_enum,
+        updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM "order" WHERE id = #{id}
+    </delete>
+
+    <insert id="addOrderItem">
+        INSERT INTO order_order_item (order_id, order_item_id)
+        VALUES (#{orderId}, #{orderItemId})
+    </insert>
+
+    <delete id="removeOrderItem">
+        DELETE FROM order_order_item
+        WHERE order_id = #{orderId} AND order_item_id = #{orderItemId}
+    </delete>
+</mapper>

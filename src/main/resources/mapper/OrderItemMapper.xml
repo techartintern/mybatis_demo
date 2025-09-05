@@ -1,0 +1,79 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mybatis_demo.mapper.OrderItemMapper">
+
+    <resultMap id="OrderItemResultMap"
+               type="OrderItem">
+        <id property="id" column="id"/>
+        <result property="articleId" column="article_id"/>
+        <result property="orderedQuantity" column="ordered_quantity"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <resultMap id="OrderItemWithArticleResultMap"
+               type="OrderItem"
+               extends="OrderItemResultMap">
+        <association property="article"
+                     javaType="Article">
+            <id property="id" column="a_id"/>
+            <result property="name" column="a_name"/>
+            <result property="description" column="a_description"/>
+            <result property="category" column="a_category"/>
+            <result property="price" column="a_price"/>
+            <result property="availableQuantity" column="a_available_quantity"/>
+        </association>
+    </resultMap>
+
+    <select id="findAll" resultMap="OrderItemWithArticleResultMap">
+        SELECT oi.*,
+        a.id as a_id, a.name as a_name, a.description as a_description,
+        a.category as a_category, a.price as a_price, a.available_quantity as
+        a_available_quantity
+        FROM order_item oi
+        LEFT JOIN article a ON oi.article_id = a.id
+        ORDER BY oi.created_at DESC
+    </select>
+
+    <select id="findById" resultMap="OrderItemWithArticleResultMap">
+        SELECT oi.*,
+        a.id as a_id, a.name as a_name, a.description as a_description,
+        a.category as a_category, a.price as a_price, a.available_quantity as
+        a_available_quantity
+        FROM order_item oi
+        LEFT JOIN article a ON oi.article_id = a.id
+        WHERE oi.id = #{id}
+    </select>
+
+    <select id="findByOrderId" resultMap="OrderItemWithArticleResultMap">
+        SELECT oi.*,
+        a.id as a_id, a.name as a_name, a.description as a_description,
+        a.category as a_category, a.price as a_price, a.available_quantity as
+        a_available_quantity
+        FROM order_item oi
+        JOIN order_order_item ooi ON oi.id = ooi.order_item_id
+        LEFT JOIN article a ON oi.article_id = a.id
+        WHERE ooi.order_id = #{orderId}
+    </select>
+
+    <insert id="insert" parameterType="OrderItem" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO order_item (article_id, ordered_quantity, unit_price,
+        total_price)
+        VALUES (#{articleId}, #{orderedQuantity}, #{unitPrice}, #{totalPrice})
+    </insert>
+
+    <update id="update" parameterType="OrderItem">
+        UPDATE order_item
+        SET article_id = #{articleId},
+        ordered_quantity = #{orderedQuantity},
+        unit_price = #{unitPrice},
+        total_price = #{totalPrice}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM order_item WHERE id = #{id}
+    </delete>
+</mapper>

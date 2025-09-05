@@ -1,0 +1,68 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mybatis_demo.mapper.ArticleMapper">
+
+    <resultMap id="ArticleResultMap"
+               type="Article">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="category" column="category"/>
+        <result property="price" column="price"/>
+        <result property="availableQuantity" column="available_quantity"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="ArticleResultMap">
+        SELECT * FROM article ORDER BY created_at DESC
+    </select>
+
+    <select id="findById" resultMap="ArticleResultMap">
+        SELECT * FROM article WHERE id = #{id}
+    </select>
+
+    <select id="findByCategory" resultMap="ArticleResultMap">
+        SELECT * FROM article WHERE category = #{category}::category_enum ORDER
+        BY name
+    </select>
+
+    <select id="findByNameContaining" resultMap="ArticleResultMap">
+        SELECT * FROM article WHERE LOWER(name) LIKE LOWER(CONCAT('%', #{name},
+        '%')) ORDER BY name
+    </select>
+
+    <select id="findAvailableArticles" resultMap="ArticleResultMap">
+        SELECT * FROM article WHERE available_quantity > 0 ORDER BY name
+    </select>
+
+    <insert id="insert" parameterType="Article" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO article (name, description, category, price,
+        available_quantity)
+        VALUES (#{name}, #{description}, #{category}::category_enum, #{price},
+        #{availableQuantity})
+    </insert>
+
+    <update id="update" parameterType="Article">
+        UPDATE article
+        SET name = #{name},
+        description = #{description},
+        category = #{category}::category_enum,
+        price = #{price},
+        available_quantity = #{availableQuantity},
+        updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateQuantity">
+        UPDATE article
+        SET available_quantity = #{quantity},
+        updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM article WHERE id = #{id}
+    </delete>
+</mapper>
